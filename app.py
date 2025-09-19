@@ -6,13 +6,14 @@ import whisper
 
 app = Flask(__name__)
 
-# Allow your Netlify site
+# Allow your Netlify frontend (replace with your URL if you want to restrict)
 CORS(app, resources={r"/*": {"origins": "*"}})
-# Cache loaded models in memory so they don’t reload every request
+
+# Cache Whisper models so they don't reload every time
 whisper_models = {}
 
 def get_whisper_model(name="small"):
-    """Load whisper model into cache (CPU only)."""
+    """Load Whisper model into cache (CPU only)."""
     if name not in whisper_models:
         print(f"Loading Whisper model: {name} ...")
         whisper_models[name] = whisper.load_model(name)
@@ -27,16 +28,16 @@ def transcribe_audio():
     if file.filename == "":
         return jsonify({"error": "Empty filename"}), 400
 
-    # Default to small if not provided
-    model_name = request.form.get("model", "small")
+    # Always use small model to avoid Render free tier memory crashes
+    model_name = "small"
 
     try:
-        # Save file temporarily
+        # Save audio temporarily
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
             file.save(tmp.name)
             tmp_path = tmp.name
 
-        # Load Whisper model
+        # Load model
         model = get_whisper_model(model_name)
 
         # Transcribe
@@ -68,7 +69,10 @@ def transcribe_audio():
         except Exception:
             pass
 
+@app.route("/")
+def home():
+    return jsonify({"status": "Transcriber backend is running!"})
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=True)
-
+    app.run(host="0.0.0.0", port=port)

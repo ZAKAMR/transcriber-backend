@@ -5,7 +5,9 @@ from flask_cors import CORS
 import whisper
 
 app = Flask(__name__)
-CORS(app)  # allow frontend to connect
+
+# Allow your Netlify site
+CORS(app, resources={r"/*": {"origins": "https://sprightly-malasada-911fc7.netlify.app"}})
 
 # Cache loaded models in memory so they don’t reload every request
 whisper_models = {}
